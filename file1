@@ -1,0 +1,91 @@
+# Precision Irrigation Using AI
+# Synthetic Data + Machine Learning Model
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, r2_score
+import matplotlib.pyplot as plt
+
+# -----------------------------
+# 1. Generate Synthetic Dataset
+# -----------------------------
+np.random.seed(42)
+samples = 500
+
+data = {
+    "soil_moisture_%": np.random.uniform(10, 60, samples),
+    "temperature_C": np.random.uniform(15, 40, samples),
+    "humidity_%": np.random.uniform(30, 90, samples),
+    "rainfall_mm": np.random.uniform(0, 20, samples),
+    "crop_type": np.random.randint(0, 3, samples),  # 0=Wheat, 1=Maize, 2=Rice
+}
+
+df = pd.DataFrame(data)
+
+# Target variable: Water needed (liters/hectare)
+df["irrigation_water_lph"] = (
+    120
+    - 1.2 * df["soil_moisture_%"]
+    + 0.8 * df["temperature_C"]
+    - 0.5 * df["humidity_%"]
+    - 2.0 * df["rainfall_mm"]
+    + np.random.normal(0, 5, samples)
+)
+
+# -----------------------------
+# 2. Train-Test Split
+# -----------------------------
+X = df.drop("irrigation_water_lph", axis=1)
+y = df["irrigation_water_lph"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# -----------------------------
+# 3. Train AI Model
+# -----------------------------
+model = RandomForestRegressor(
+    n_estimators=150,
+    random_state=42
+)
+model.fit(X_train, y_train)
+
+# -----------------------------
+# 4. Model Evaluation
+# -----------------------------
+predictions = model.predict(X_test)
+
+mae = mean_absolute_error(y_test, predictions)
+r2 = r2_score(y_test, predictions)
+
+print("Model Performance:")
+print(f"Mean Absolute Error: {mae:.2f}")
+print(f"R² Score: {r2:.2f}")
+
+# -----------------------------
+# 5. Visualization
+# -----------------------------
+plt.figure()
+plt.scatter(y_test, predictions)
+plt.xlabel("Actual Irrigation Water (L/ha)")
+plt.ylabel("Predicted Irrigation Water (L/ha)")
+plt.title("Actual vs Predicted Irrigation Water")
+plt.show()
+
+# -----------------------------
+# 6. Sample Prediction
+# -----------------------------
+sample_input = pd.DataFrame({
+    "soil_moisture_%": [25],
+    "temperature_C": [32],
+    "humidity_%": [55],
+    "rainfall_mm": [3],
+    "crop_type": [1]  # Maize
+})
+
+recommended_water = model.predict(sample_input)
+print(f"Recommended irrigation water: {recommended_water[0]:.2f} L/ha")
+file1fil
